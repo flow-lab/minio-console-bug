@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  minio-setup:
+    restart: on-failure
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set server http://minio:9000 minio minio123 && \
+      /usr/bin/mc mb --ignore-existing server/test-bucket && \
+      /usr/bin/mc admin user add server reader-user reader-user && \
+      /usr/bin/mc admin policy add server my-policy /tmp/policy.json && \
+      /usr/bin/mc admin policy set server my-policy user=reader-user && \
+      /usr/bin/mc cp /data/minio.png server/test-bucket/minio.png;
+      "
+    volumes:
+      - ./images:/data:ro
+      - ./policy.json:/tmp/policy.json:ro
+
+  minio:
+    image: minio/minio:RELEASE.2022-01-08T03-11-54Z
+    command: server /data --console-address ":9001"
+    expose:
+      - "9000"
+      - "9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
