@@ -10,4 +10,4 @@ Expected: The `reader-user` can browse the bucket with attached [policy.json](./
 
 
 Note:
-- Min version of docker compose is v2.2.1
+- docker compose version v2.2.1
